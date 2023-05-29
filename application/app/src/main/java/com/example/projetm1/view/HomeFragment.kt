@@ -28,6 +28,8 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
+import com.example.projetm1.GraphicOverlay
+import com.example.projetm1.R
 import com.example.projetm1.databinding.HomeFragmentBinding
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.PoseDetection
@@ -38,7 +40,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import com.example.projetm1.R
+
 
 @AndroidEntryPoint
 class HomeFragment: Fragment(){
@@ -47,9 +49,15 @@ class HomeFragment: Fragment(){
 
     private val FILENAMEFORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
     private var imageCapture: ImageCapture? = null
-
+    private var cameraProvider: ProcessCameraProvider? = null
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
+    private var preview: Preview? = null
+    private var imageAnalysis: ImageAnalysis? = null
+    private var graphicOverlay: GraphicOverlay? = null
+    private var needUpdateGraphicOverlayImageSourceInfo = false
+    val modelName = "model.tflite"
+    private var ratio: Float = 1.625f
 
     private lateinit var cameraExecutor: ExecutorService
 
@@ -58,7 +66,12 @@ class HomeFragment: Fragment(){
         .setDetectorMode(PoseDetectorOptions.STREAM_MODE)
         .build()
 
-    val poseDetector = PoseDetection.getClient(options)
+    private val poseDetector = PoseDetection.getClient(options)
+
+    // Select back camera as a default
+    private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -72,14 +85,45 @@ class HomeFragment: Fragment(){
     @ExperimentalGetImage
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.videoCaptureButton.setOnClickListener { captureVideo() }
+        val previewView = binding.viewFinder
+
+        binding.videoCaptureButton.setOnClickListener {
+            captureVideo()
+        }
+
+        binding.testButton.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked){
+                unBindAll()
+                bindPreview()
+                bindCamera()
+
+            }else{
+                unBindAll()
+                bindPreview()
+                bindImageAnalysis()
+            }
+        }
+
+        graphicOverlay = binding.graphicOverlay
+        if (graphicOverlay == null) {
+            Log.d("GraphicOverlay", "graphicOverlay is null")
+        }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        startCamera()
+        previewView.post {
+
+
+            Log.d("coucou", ratio.toString() + " 1")
+            Log.d("coucou", binding.viewFinder.width.toString() + " width")
+            Log.d("coucou", binding.viewFinder.height.toString() + " height")
+            startCamera()
+        }
+
     }
 
     // Implements VideoCapture use case, including start and stop capturing.
+    @ExperimentalGetImage
     private fun captureVideo() {
 
         val videoCapture = this.videoCapture ?: return
@@ -143,6 +187,7 @@ class HomeFragment: Fragment(){
                                 Log.e("capture video", "Video capture ends with error: " +
                                         "${recordEvent.error}")
                             }
+
                             binding.videoCaptureButton.apply {
                                 setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_my_icon))
                                 isEnabled = true
@@ -155,65 +200,17 @@ class HomeFragment: Fragment(){
 
     @ExperimentalGetImage
     private fun startCamera() {
+
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this.requireContext())
 
         cameraProviderFuture.addListener({
             // Used to bind the lifecycle of cameras to the lifecycle owner
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-
-            // Preview
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-                }
-
-            val recorder = Recorder.Builder()
-                .setQualitySelector(
-                    QualitySelector.from(
-                        Quality.HIGHEST, FallbackStrategy.higherQualityOrLowerThan(
-                            Quality.SD)))
-                .build()
-            videoCapture = VideoCapture.withOutput(recorder)
-
-            val imageAnalysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetResolution(Size(480,640))
-                .build()
-
-            context?.let { ContextCompat.getMainExecutor(it) }?.let {
-                imageAnalysis.setAnalyzer(it, ImageAnalysis.Analyzer { imageProxy ->
-                    val rotationDegrees = imageProxy.imageInfo.rotationDegrees
-                    val image = imageProxy.image
-
-                    if(image!=null){
-                        val processImage = InputImage.fromMediaImage(image,rotationDegrees)
-
-                        poseDetector.process(processImage)
-                            .addOnSuccessListener { it ->
-                                Log.d("RIGHT_WRIST", it.getPoseLandmark(PoseLandmark.RIGHT_WRIST)?.position3D.toString())
-                                imageProxy.close()
-                            }
-                            .addOnFailureListener{
-
-
-                                imageProxy.close()
-                            }
-                    }
-
-
-                })
-            }
-
-            // Select back camera as a default
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            cameraProvider = cameraProviderFuture.get()
 
             try {
-                // Unbind use cases before rebinding
-                cameraProvider.unbindAll()
-
-                // Bind use cases to camera
-                cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, preview)
+                cameraProvider!!.unbindAll()
+                bindPreview()
+                bindImageAnalysis()
 
             } catch(exc: Exception) {
                 Log.e("Binding", "Use case binding failed", exc)
@@ -221,6 +218,150 @@ class HomeFragment: Fragment(){
 
         }, context?.let { ContextCompat.getMainExecutor(it) })
     }
+
+    private fun bindPreview() {
+        if (cameraProvider == null) {
+            return
+        }
+        if (preview != null) {
+            cameraProvider!!.unbind(preview)
+        }
+
+        val builder = Preview.Builder()
+
+        preview = builder.build()
+        preview!!.setSurfaceProvider(binding.viewFinder!!.surfaceProvider)
+        cameraProvider!!.bindToLifecycle(this, cameraSelector!!, preview)
+    }
+
+    @ExperimentalGetImage
+    private fun bindImageAnalysis() {
+        if (cameraProvider == null) {
+            return
+        }
+        if (imageAnalysis != null) {
+            cameraProvider!!.unbind(imageAnalysis)
+        }
+
+        Log.d("coucou", ratio.toString() + " 2")
+        val imageAnalysis = ImageAnalysis.Builder()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setTargetResolution(Size(binding.viewFinder.width, binding.viewFinder.height))
+            .build()
+
+        needUpdateGraphicOverlayImageSourceInfo = true
+
+        context?.let { ContextCompat.getMainExecutor(it) }?.let {
+            imageAnalysis?.setAnalyzer(it, ImageAnalysis.Analyzer { imageProxy ->
+                if (needUpdateGraphicOverlayImageSourceInfo) {
+                    val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+                    if (rotationDegrees == 0 || rotationDegrees == 180) {
+                        graphicOverlay!!.setImageSourceInfo(
+                            imageProxy.width,
+                            imageProxy.height,
+                            false
+                        )
+                    } else {
+                        graphicOverlay!!.setImageSourceInfo(
+                            imageProxy.height,
+                            imageProxy.width,
+                            false
+                        )
+                    }
+
+                    val image = imageProxy.image
+
+                    if (image != null) {
+                        val processImage = InputImage.fromMediaImage(image, rotationDegrees)
+                        poseDetector.process(processImage)
+                            .addOnSuccessListener { it ->
+                                if (it.getPoseLandmark(PoseLandmark.RIGHT_WRIST)?.position3D?.y != null && it.getPoseLandmark(
+                                        PoseLandmark.RIGHT_ELBOW
+                                    )?.position3D?.y != null && it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y != null
+                                ) {
+                                    graphicOverlay!!.add(
+                                        PoseGraphic(
+                                            graphicOverlay!!,
+                                            it,
+                                            false,
+                                            false,
+                                            false
+                                        )
+                                    )
+                                    /* if (it.getPoseLandmark(PoseLandmark.RIGHT_WRIST)?.position3D?.y.toString()
+                                            .toFloat() < it.getPoseLandmark(PoseLandmark.RIGHT_ELBOW)?.position3D?.y.toString()
+                                            .toFloat()
+                                        && it.getPoseLandmark(PoseLandmark.RIGHT_ELBOW)?.position3D?.y.toString()
+                                            .toFloat() < it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y.toString()
+                                            .toFloat()
+                                    ){
+                                        Log.d("coucou", "HH")
+                                    }
+
+                                    */
+
+                                    // val model = context?.let { Model.newInstance(it) }
+
+                                    // Creates inputs for reference.
+                                    val inputFeature = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.x.toString() +" "+ it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.y.toString() +" "+ it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.z.toString() +" "+ it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.toString()
+
+                                    val test = it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x?.div(
+                                        image.height
+                                    ).toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y?.div(
+                                        image.width
+                                    ).toString() + "         " + image.height + " " + image.width + "         " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x.toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y.toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.z.toString()
+                                    Log.d("coucou", test)
+                                    //Log.d("coucou", inputFeature)
+                                    // Runs model inference and gets result.
+                                    // val outputs = model?.process(inputFeature0)
+                                    // val outputFeature0 = outputs?.outputFeature0AsTensorBuffer
+
+                                    // Releases model resources if no longer used.
+                                    // model?.close()
+
+                                }
+                                imageProxy.close()
+                            }
+                            .addOnFailureListener {
+                                imageProxy.close()
+                            }
+                    }
+                }
+            })
+        }
+
+        cameraProvider!!.bindToLifecycle(this, cameraSelector!!, imageAnalysis)
+    }
+    @ExperimentalGetImage
+    private fun bindCamera() {
+        if (cameraProvider == null) {
+            return
+        }
+        if (videoCapture != null) {
+            cameraProvider!!.unbind(videoCapture)
+        }
+
+        val recorder = Recorder.Builder()
+            .setQualitySelector(QualitySelector.from(Quality.HIGHEST, FallbackStrategy.higherQualityOrLowerThan(Quality.SD)))
+            .build()
+
+        videoCapture = VideoCapture.withOutput(recorder)
+
+        cameraProvider!!.bindToLifecycle(this, cameraSelector!!, videoCapture)
+    }
+
+    private fun unBindPreview(){
+        cameraProvider!!.unbind(preview)
+    }
+
+    private fun unBindCamera(){
+        cameraProvider!!.unbind(videoCapture)
+    }
+
+    private fun unBindAll(){
+        cameraProvider!!.unbindAll()
+    }
+
 
     override fun onDestroy() {
         super.onDestroy()
