@@ -19,7 +19,9 @@ import java.io.File
 class StorageFragment: Fragment() {
 
     private lateinit var binding: StorageFragmentBinding
-    private lateinit var videoList: ArrayList<Video>
+    companion object {
+        lateinit var videoList: ArrayList<Video>
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,13 +46,14 @@ class StorageFragment: Fragment() {
     @SuppressLint("InlinedApi", "Recycle", "Range")
     fun getAllVideos(context: Context): ArrayList<Video> {
         val tempList = ArrayList<Video>()
+        val selection = MediaStore.Video.Media.TITLE + " LIKE '[ReferAI]%'"
         val projection = arrayOf(
             MediaStore.Video.Media.TITLE, MediaStore.Video.Media.SIZE, MediaStore.Video.Media._ID,
             MediaStore.Video.Media.BUCKET_DISPLAY_NAME, MediaStore.Video.Media.DATA, MediaStore.Video.Media.DATE_ADDED,
             MediaStore.Video.Media.DURATION
         )
         val cursor = context.contentResolver.query(
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection, null, null,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection, selection, null,
             MediaStore.Video.Media.DATE_ADDED + " DESC"
         )
         cursor?.use {

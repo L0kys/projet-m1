@@ -14,6 +14,14 @@
     <fragment
         android:id="@+id/storageFragment"
         android:name="com.example.projetm1.view.StorageFragment"
-        android:label="StorageFragment" />
+        android:label="StorageFragment" >
+        <action
+            android:id="@+id/action_storageFragment_to_playerFragment"
+            app:destination="@id/playerFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/playerFragment"
+        android:name="com.example.projetm1.view.PlayerFragment"
+        android:label="PlayerFragment" />
 
 </navigation>

@@ -4,7 +4,11 @@ import android.content.Context
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.navigation.Navigation
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
+import com.example.projetm1.R
 import com.example.projetm1.Video
 import com.example.projetm1.databinding.ViewHolderVideoBinding
 
@@ -23,6 +27,15 @@ class VideoListAdapter(private val context: Context, private var videoList: Arra
     override fun onBindViewHolder(holder: StorageViewHolder, position: Int) {
         holder.title.text = videoList[position].title
         holder.duration.text = DateUtils.formatElapsedTime(videoList[position].duration/1000)
+        Glide.with(context)
+            .asBitmap()
+            .load(videoList[position].artUri)
+            .apply(RequestOptions().placeholder(R.drawable.baseline_play_circle_24).centerCrop())
+            .into(holder.image)
+        holder.root.setOnClickListener {
+            PlayerFragment.position = position
+            Navigation.findNavController(holder.itemView).navigate(R.id.action_storageFragment_to_playerFragment)
+        }
     }
 }
 
