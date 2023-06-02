@@ -25,6 +25,9 @@
         <action
             android:id="@+id/action_accueil_to_rulesFragment"
             app:destination="@id/rulesFragment" />
+        <action
+            android:id="@+id/action_accueil_to_recordFragment"
+            app:destination="@id/recordFragment" />
     </fragment>
     <fragment
         android:id="@+id/storageFragment"
@@ -43,5 +46,9 @@
         android:name="com.example.projetm1.view.RulesFragment"
         android:label="fragment_rules"
         tools:layout="@layout/fragment_rules" />
+    <fragment
+        android:id="@+id/recordFragment"
+        android:name="com.example.projetm1.view.RecordFragment"
+        android:label="RecordFragment" />
 
 </navigation>

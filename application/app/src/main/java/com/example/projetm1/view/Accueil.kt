@@ -57,6 +57,11 @@ class Accueil : Fragment() {
                 it.findNavController().navigate(action)
             }
 
+            binding.goToRecodingButton.setOnClickListener {
+                val action = AccueilDirections.actionAccueilToRecordFragment()
+                it.findNavController().navigate(action)
+            }
+
         }
     }
 

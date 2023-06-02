@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.projetm1.Video
 import com.example.projetm1.databinding.StorageFragmentBinding
 import java.io.File
+
 
 //Test n°2
 class StorageFragment: Fragment() {
@@ -81,6 +83,7 @@ class StorageFragment: Fragment() {
                     if (file.exists()) {
                         tempList.add(video)
                     }
+
                 } catch (e: Exception) {
                     // Handle the exception if necessary
                 }
