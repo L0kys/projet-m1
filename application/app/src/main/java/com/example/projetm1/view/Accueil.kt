@@ -43,7 +43,7 @@ class Accueil : Fragment() {
 
 
             binding.goToLivePreviewButton.setOnClickListener {
-                val action = AccueilDirections.actionAccueilToHomeFragment()
+                val action = AccueilDirections.actionAccueilToLiveFragment()
                 it.findNavController().navigate(action)
             }
 
