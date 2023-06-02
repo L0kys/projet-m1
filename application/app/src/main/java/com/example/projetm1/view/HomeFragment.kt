@@ -89,18 +89,7 @@ class HomeFragment: Fragment(){
             captureVideo()
         }
 
-        binding.testButton.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                unBindAll()
-                bindPreview()
-                bindCamera()
 
-            }else{
-                unBindAll()
-                bindPreview()
-                bindImageAnalysis()
-            }
-        }
 
 
         cameraExecutor = Executors.newSingleThreadExecutor()

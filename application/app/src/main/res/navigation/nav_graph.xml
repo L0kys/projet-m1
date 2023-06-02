@@ -22,6 +22,9 @@
         <action
             android:id="@+id/action_accueil_to_storageFragment"
             app:destination="@id/storageFragment" />
+        <action
+            android:id="@+id/action_accueil_to_rulesFragment"
+            app:destination="@id/rulesFragment" />
     </fragment>
     <fragment
         android:id="@+id/storageFragment"
@@ -35,5 +38,10 @@
         android:id="@+id/playerFragment"
         android:name="com.example.projetm1.view.PlayerFragment"
         android:label="PlayerFragment" />
+    <fragment
+        android:id="@+id/rulesFragment"
+        android:name="com.example.projetm1.view.RulesFragment"
+        android:label="fragment_rules"
+        tools:layout="@layout/fragment_rules" />
 
 </navigation>

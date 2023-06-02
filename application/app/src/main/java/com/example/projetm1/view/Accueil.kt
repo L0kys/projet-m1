@@ -40,7 +40,6 @@ class Accueil : Fragment() {
             binding.rulesButton.width = buttonWidth
             binding.goToGalleryButton.width = buttonWidth
 
-            binding.buttonLayout.setPadding(buttonWidth.div(3),15,buttonWidth.div(3),15)
 
 
             binding.goToLivePreviewButton.setOnClickListener {
@@ -53,7 +52,10 @@ class Accueil : Fragment() {
                 it.findNavController().navigate(action)
             }
 
-
+            binding.rulesButton.setOnClickListener {
+                val action = AccueilDirections.actionAccueilToRulesFragment()
+                it.findNavController().navigate(action)
+            }
 
         }
     }
