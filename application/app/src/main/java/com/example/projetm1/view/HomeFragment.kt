@@ -54,8 +54,6 @@ class HomeFragment: Fragment(){
     private var recording: Recording? = null
     private var preview: Preview? = null
     private var imageAnalysis: ImageAnalysis? = null
-    private var graphicOverlay: GraphicOverlay? = null
-    private var needUpdateGraphicOverlayImageSourceInfo = false
     val modelName = "model.tflite"
     private var ratio: Float = 1.625f
 
@@ -104,10 +102,6 @@ class HomeFragment: Fragment(){
             }
         }
 
-        graphicOverlay = binding.graphicOverlay
-        if (graphicOverlay == null) {
-            Log.d("GraphicOverlay", "graphicOverlay is null")
-        }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -249,84 +243,52 @@ class HomeFragment: Fragment(){
             .setTargetResolution(Size(binding.viewFinder.width, binding.viewFinder.height))
             .build()
 
-        needUpdateGraphicOverlayImageSourceInfo = true
 
         context?.let { ContextCompat.getMainExecutor(it) }?.let {
-            imageAnalysis?.setAnalyzer(it, ImageAnalysis.Analyzer { imageProxy ->
-                if (needUpdateGraphicOverlayImageSourceInfo) {
+            imageAnalysis.setAnalyzer(it, ImageAnalysis.Analyzer { imageProxy ->
                     val rotationDegrees = imageProxy.imageInfo.rotationDegrees
-                    if (rotationDegrees == 0 || rotationDegrees == 180) {
-                        graphicOverlay!!.setImageSourceInfo(
-                            imageProxy.width,
-                            imageProxy.height,
-                            false
-                        )
-                    } else {
-                        graphicOverlay!!.setImageSourceInfo(
-                            imageProxy.height,
-                            imageProxy.width,
-                            false
-                        )
-                    }
-
                     val image = imageProxy.image
 
                     if (image != null) {
                         val processImage = InputImage.fromMediaImage(image, rotationDegrees)
                         poseDetector.process(processImage)
                             .addOnSuccessListener { it ->
-                                if (it.getPoseLandmark(PoseLandmark.RIGHT_WRIST)?.position3D?.y != null && it.getPoseLandmark(
-                                        PoseLandmark.RIGHT_ELBOW
-                                    )?.position3D?.y != null && it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y != null
-                                ) {
-                                    graphicOverlay!!.add(
-                                        PoseGraphic(
-                                            graphicOverlay!!,
-                                            it,
-                                            false,
-                                            false,
-                                            false
-                                        )
-                                    )
-                                    /* if (it.getPoseLandmark(PoseLandmark.RIGHT_WRIST)?.position3D?.y.toString()
-                                            .toFloat() < it.getPoseLandmark(PoseLandmark.RIGHT_ELBOW)?.position3D?.y.toString()
-                                            .toFloat()
-                                        && it.getPoseLandmark(PoseLandmark.RIGHT_ELBOW)?.position3D?.y.toString()
-                                            .toFloat() < it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y.toString()
-                                            .toFloat()
-                                    ){
-                                        Log.d("coucou", "HH")
+                                if(binding.parentLayout.childCount>3){
+                                    binding.parentLayout.removeViewAt(3)
+                                }
+                                if(it.allPoseLandmarks.isNotEmpty()){
+
+                                    if(binding.parentLayout.childCount>3){
+                                        binding.parentLayout.removeViewAt(3)
                                     }
 
-                                    */
-
-                                    // val model = context?.let { Model.newInstance(it) }
-
-                                    // Creates inputs for reference.
-                                    val inputFeature = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.x.toString() +" "+ it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.y.toString() +" "+ it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.z.toString() +" "+ it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.toString()
-
-                                    val test = it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x?.div(
-                                        image.height
-                                    ).toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y?.div(
-                                        image.width
-                                    ).toString() + "         " + image.height + " " + image.width + "         " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x.toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y.toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.z.toString()
-                                    Log.d("coucou", test)
-                                    //Log.d("coucou", inputFeature)
-                                    // Runs model inference and gets result.
-                                    // val outputs = model?.process(inputFeature0)
-                                    // val outputFeature0 = outputs?.outputFeature0AsTensorBuffer
-
-                                    // Releases model resources if no longer used.
-                                    // model?.close()
-
+                                    val element = Draw(context,it,image.height,image.width)
+                                    binding.parentLayout.addView(element)
                                 }
+
+                                // Creates inputs for reference.
+                                val inputFeature = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.x.toString() +" "+ it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.y.toString() +" "+ it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.z.toString() +" "+ it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.toString()
+
+                                val test = it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x?.div(
+                                    image.height
+                                ).toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y?.div(
+                                    image.width
+                                ).toString() + "         " + image.height + " " + image.width + "         " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x.toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y.toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.z.toString()
+                                Log.d("coucou", test)
+                                //Log.d("coucou", inputFeature)
+                                // Runs model inference and gets result.
+                                // val outputs = model?.process(inputFeature0)
+                                // val outputFeature0 = outputs?.outputFeature0AsTensorBuffer
+
+                                // Releases model resources if no longer used.
+                                // model?.close()
                                 imageProxy.close()
                             }
                             .addOnFailureListener {
                                 imageProxy.close()
                             }
                     }
-                }
+
             })
         }
 

@@ -3,13 +3,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/storageFragment">
+    app:startDestination="@id/accueil">
 
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.projetm1.view.HomeFragment"
         android:label="HomeFragment"
         tools:layout="@layout/home_fragment">
+    </fragment>
+    <fragment
+        android:id="@+id/accueil"
+        android:name="com.example.projetm1.view.Accueil"
+        android:label="fragment_accueil"
+        tools:layout="@layout/fragment_accueil" >
+        <action
+            android:id="@+id/action_accueil_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_accueil_to_storageFragment"
+            app:destination="@id/storageFragment" />
     </fragment>
     <fragment
         android:id="@+id/storageFragment"

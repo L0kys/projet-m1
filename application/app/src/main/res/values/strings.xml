@@ -1,5 +1,11 @@
 <resources>
     <string name="app_name">projet m1</string>
+    <string name="rules_button_text">Rules</string>
+    <string name="go_to_live_preview_button_text">Live</string>
+    <string name="go_to_recording_button_text">Record</string>
+    <string name="go_to_gallery_button_text">Gallery</string>
+    <string name="home_title_text">REFERAI</string>
+
     <string name="thumbnail">miniature</string>
     <string name="title">Titre</string>
     <string name="duration">0:00</string>

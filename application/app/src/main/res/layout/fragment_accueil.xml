@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="15dp"
+    android:id="@+id/parent_layout"
+    tools:context=".view.Accueil">
+
+
+    <TextView
+        android:id="@+id/title_textview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/home_title_text"
+        android:fontFamily="@font/title_font"
+        android:textSize="70sp"
+        android:textAlignment="center"
+        android:layout_marginTop="40sp"
+        android:textColor="@color/design_default_color_primary">
+    </TextView>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:src="@drawable/whistle"
+        app:tint="@color/design_default_color_primary">
+    </ImageView>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/button_layout"
+        >
+        <Button
+            android:id="@+id/go_to_live_preview_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/custom_button_shape_reversed"
+            android:textColor="@color/design_default_color_primary"
+            android:drawableTop="@drawable/pose_detection"
+            android:drawableTint="@color/design_default_color_primary"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:text="@string/go_to_live_preview_button_text">
+        </Button>
+        <Button
+            android:id="@+id/go_to_recoding_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/go_to_recording_button_text"
+            android:background="@drawable/custom_button_shape"
+            android:textColor="@color/design_default_color_primary"
+            android:drawableTop="@drawable/camera"
+            android:drawableTint="@color/design_default_color_primary"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true">
+
+        </Button>
+
+
+
+        <Button
+            android:id="@+id/rules_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/rules_button_text"
+            android:background="@drawable/custom_button_shape_reversed"
+            android:textColor="@color/design_default_color_primary"
+            android:drawableTop="@drawable/rulebook"
+            android:drawableTint="@color/design_default_color_primary"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            >
+        </Button>
+        <Button
+            android:id="@+id/go_to_gallery_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/go_to_gallery_button_text"
+            android:background="@drawable/custom_button_shape"
+            android:textColor="@color/design_default_color_primary"
+            android:drawableTop="@drawable/gallery"
+            android:drawableTint="@color/design_default_color_primary"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true">
+        </Button>
+    </RelativeLayout>
+
+</LinearLayout>
