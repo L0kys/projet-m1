@@ -1,35 +1,18 @@
 package com.example.projetm1.view
 
-import android.Manifest
-import android.content.ContentValues
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.FallbackStrategy
-import androidx.camera.video.MediaStoreOutputOptions
-import androidx.camera.video.Quality
-import androidx.camera.video.QualitySelector
-import androidx.camera.video.Recorder
-import androidx.camera.video.Recording
-import androidx.camera.video.VideoCapture
-import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
-import com.example.projetm1.GraphicOverlay
-import com.example.projetm1.R
 import com.example.projetm1.databinding.HomeFragmentBinding
 import com.example.projetm1.ml.Model
 import com.google.mlkit.vision.common.InputImage
@@ -40,8 +23,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.nio.ByteBuffer
-import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -87,13 +68,9 @@ class HomeFragment: Fragment(){
             resetResult()
         }
 
-
-
-
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         previewView.post {
-
             startCamera()
         }
 
