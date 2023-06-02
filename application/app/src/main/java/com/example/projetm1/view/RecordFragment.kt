@@ -43,7 +43,7 @@ class RecordFragment: Fragment() {
 
     private lateinit var binding: RecordFragmentBinding
 
-    private val FILENAMEFORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+    private val FILENAMEFORMAT = "yyyy-MM-dd-HH-mm-ss"
     private var imageCapture: ImageCapture? = null
     private var cameraProvider: ProcessCameraProvider? = null
     private var videoCapture: VideoCapture<Recorder>? = null

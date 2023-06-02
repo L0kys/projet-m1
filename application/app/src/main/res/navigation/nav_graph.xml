@@ -6,10 +6,10 @@
     app:startDestination="@id/accueil">
 
     <fragment
-        android:id="@+id/homeFragment"
-        android:name="com.example.projetm1.view.HomeFragment"
-        android:label="HomeFragment"
-        tools:layout="@layout/home_fragment">
+        android:id="@+id/liveFragment"
+        android:name="com.example.projetm1.view.LiveFragment"
+        android:label="LiveFragment"
+        tools:layout="@layout/live_fragment">
     </fragment>
     <fragment
         android:id="@+id/accueil"
@@ -17,8 +17,8 @@
         android:label="fragment_accueil"
         tools:layout="@layout/fragment_accueil" >
         <action
-            android:id="@+id/action_accueil_to_homeFragment"
-            app:destination="@id/homeFragment" />
+            android:id="@+id/action_accueil_to_liveFragment"
+            app:destination="@id/liveFragment" />
         <action
             android:id="@+id/action_accueil_to_storageFragment"
             app:destination="@id/storageFragment" />

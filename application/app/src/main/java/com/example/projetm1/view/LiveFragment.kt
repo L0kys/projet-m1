@@ -13,7 +13,8 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.example.projetm1.databinding.HomeFragmentBinding
+import com.example.projetm1.R
+import com.example.projetm1.databinding.LiveFragmentBinding
 import com.example.projetm1.ml.Model
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.PoseDetection
@@ -23,18 +24,20 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
 @AndroidEntryPoint
-class HomeFragment: Fragment(){
+class LiveFragment: Fragment(){
 
-    private lateinit var binding: HomeFragmentBinding
+    private lateinit var binding: LiveFragmentBinding
 
     private var cameraProvider: ProcessCameraProvider? = null
     private var preview: Preview? = null
     private var imageAnalysis: ImageAnalysis? = null
+    private var movementTab = arrayOf(0,0,0)
 
     private lateinit var cameraExecutor: ExecutorService
 
@@ -56,7 +59,7 @@ class HomeFragment: Fragment(){
         savedInstanceState: Bundle?
 
     ): View? {
-        binding = HomeFragmentBinding.inflate(inflater)
+        binding = LiveFragmentBinding.inflate(inflater)
         return binding.root
     }
     @ExperimentalGetImage
@@ -68,9 +71,13 @@ class HomeFragment: Fragment(){
             resetResult()
         }
 
+
+
+
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         previewView.post {
+
             startCamera()
         }
 
@@ -183,6 +190,7 @@ class HomeFragment: Fragment(){
                                     // On crée un buffer pour y metter les données utiles
                                     val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 24), DataType.FLOAT32)
                                     var byteBuffer : ByteBuffer = ByteBuffer.allocateDirect(4*24)
+                                    byteBuffer.order(ByteOrder.nativeOrder())
                                     inputFeature0.loadBuffer(byteBuffer)
 
                                     if (leftShoulderX != null) {
@@ -265,9 +273,30 @@ class HomeFragment: Fragment(){
                                     val outputFeature0 = outputs.outputFeature0AsTensorBuffer
                                     model.close()
 
+
+                                    if (outputFeature0.floatArray[0] > 0.97f ){
+                                        movementTab[0] += 1
+                                    }
+                                    else if (outputFeature0.floatArray[1] > 0.97f ){
+                                        movementTab[1] += 1
+                                    }
+                                    else if (outputFeature0.floatArray[2] > 0.97f ){
+                                        movementTab[2] += 1
+                                    }
+
+                                    if (movementTab[0] > movementTab[1] && movementTab[0] > movementTab[2]){
+                                        binding.livePreviewExerciceNameTextView.text = getString(R.string.deadlift_name)
+                                    } else if (movementTab[1] > movementTab[0] && movementTab[1] > movementTab[2]){
+                                        binding.livePreviewExerciceNameTextView.text = getString(R.string.squat_name)
+                                    }else{
+                                        binding.livePreviewExerciceNameTextView.text = getString(R.string.bench_name)
+                                    }
                                     // outputFeature0.floatArray[0]: Deadlift
                                     // outputFeature0.floatArray[1]: Squat
                                     // outputFeature0.floatArray[2]: Bench
+                                    Log.d("quoicoubeh", "DeadliftCount : "+movementTab[0])
+                                    Log.d("quoicoubeh", "SquatCount : "+movementTab[1])
+                                    Log.d("quoicoubeh", "BenchCount : "+movementTab[2])
                                     Log.d("quoicoubeh", "Deadlift : "+outputFeature0.floatArray[0].toString())
                                     Log.d("quoicoubeh", "Squat : "+outputFeature0.floatArray[1].toString())
                                     Log.d("quoicoubeh", "Bench : "+outputFeature0.floatArray[2].toString())
