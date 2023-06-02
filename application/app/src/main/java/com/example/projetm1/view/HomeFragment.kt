@@ -31,11 +31,15 @@ import androidx.fragment.app.Fragment
 import com.example.projetm1.GraphicOverlay
 import com.example.projetm1.R
 import com.example.projetm1.databinding.HomeFragmentBinding
+import com.example.projetm1.ml.Model
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.PoseDetection
 import com.google.mlkit.vision.pose.PoseLandmark
 import com.google.mlkit.vision.pose.defaults.PoseDetectorOptions
 import dagger.hilt.android.AndroidEntryPoint
+import org.tensorflow.lite.DataType
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
@@ -47,15 +51,9 @@ class HomeFragment: Fragment(){
 
     private lateinit var binding: HomeFragmentBinding
 
-    private val FILENAMEFORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-    private var imageCapture: ImageCapture? = null
     private var cameraProvider: ProcessCameraProvider? = null
-    private var videoCapture: VideoCapture<Recorder>? = null
-    private var recording: Recording? = null
     private var preview: Preview? = null
     private var imageAnalysis: ImageAnalysis? = null
-    val modelName = "model.tflite"
-    private var ratio: Float = 1.625f
 
     private lateinit var cameraExecutor: ExecutorService
 
@@ -86,7 +84,7 @@ class HomeFragment: Fragment(){
         val previewView = binding.viewFinder
 
         binding.videoCaptureButton.setOnClickListener {
-            captureVideo()
+            resetResult()
         }
 
 
@@ -96,89 +94,13 @@ class HomeFragment: Fragment(){
 
         previewView.post {
 
-
-            Log.d("coucou", ratio.toString() + " 1")
-            Log.d("coucou", binding.viewFinder.width.toString() + " width")
-            Log.d("coucou", binding.viewFinder.height.toString() + " height")
             startCamera()
         }
 
     }
 
-    // Implements VideoCapture use case, including start and stop capturing.
-    @ExperimentalGetImage
-    private fun captureVideo() {
 
-        val videoCapture = this.videoCapture ?: return
-
-        binding.videoCaptureButton.isEnabled = false
-
-        val curRecording = recording
-        if (curRecording != null) {
-            // Stop the current recording session.
-            curRecording.stop()
-            recording = null
-            return
-        }
-
-        // create and start a new recording session
-        val name = SimpleDateFormat(FILENAMEFORMAT, Locale.US)
-            .format(System.currentTimeMillis())
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/CameraX-Video")
-            }
-        }
-
-        val resolver = requireActivity().contentResolver
-
-        val mediaStoreOutputOptions = MediaStoreOutputOptions
-            .Builder(resolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-            .setContentValues(contentValues)
-            .build()
-        recording = context?.let {
-            videoCapture.output
-                .prepareRecording(it, mediaStoreOutputOptions)
-                .apply {
-                    if (PermissionChecker.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.RECORD_AUDIO) ==
-                        PermissionChecker.PERMISSION_GRANTED) {
-                        withAudioEnabled()
-                    }
-                }
-                .start(ContextCompat.getMainExecutor(requireContext())) { recordEvent ->
-                    when(recordEvent) {
-                        is VideoRecordEvent.Start -> {
-                            binding.videoCaptureButton.apply {
-                                setImageDrawable(ContextCompat.getDrawable(context, R.drawable.baseline_catching_pokemon_24))
-                                isEnabled = true
-                            }
-                        }
-
-                        is VideoRecordEvent.Finalize -> {
-                            if (!recordEvent.hasError()) {
-                                val msg = "Video capture succeeded: " +
-                                        "${recordEvent.outputResults.outputUri}"
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT)
-                                    .show()
-                            } else {
-                                recording?.close()
-                                recording = null
-                                Log.e("capture video", "Video capture ends with error: " +
-                                        "${recordEvent.error}")
-                            }
-
-                            binding.videoCaptureButton.apply {
-                                setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_my_icon))
-                                isEnabled = true
-                            }
-                        }
-                    }
-                }
-        }
+    private fun resetResult() {
     }
 
     @ExperimentalGetImage
@@ -226,7 +148,6 @@ class HomeFragment: Fragment(){
             cameraProvider!!.unbind(imageAnalysis)
         }
 
-        Log.d("coucou", ratio.toString() + " 2")
         val imageAnalysis = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setTargetResolution(Size(binding.viewFinder.width, binding.viewFinder.height))
@@ -253,24 +174,130 @@ class HomeFragment: Fragment(){
 
                                     val element = Draw(context,it,image.height,image.width)
                                     binding.parentLayout.addView(element)
+
+                                    // On récupère tous les points utiles pour notre modèle
+                                    val leftShoulderX = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.x?.div(image.height)
+                                    val leftShoulderY = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.y?.div(image.width)
+                                    val rightShoulderX = it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x?.div(image.height)
+                                    val rightShoulderY = it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y?.div(image.width)
+                                    val leftElbowX = it.getPoseLandmark(PoseLandmark.LEFT_ELBOW)?.position3D?.x?.div(image.height)
+                                    val leftElbowY = it.getPoseLandmark(PoseLandmark.LEFT_ELBOW)?.position3D?.y?.div(image.width)
+                                    val rightElbowX = it.getPoseLandmark(PoseLandmark.RIGHT_ELBOW)?.position3D?.x?.div(image.height)
+                                    val rightElbowY = it.getPoseLandmark(PoseLandmark.RIGHT_ELBOW)?.position3D?.y?.div(image.width)
+                                    val leftWristX = it.getPoseLandmark(PoseLandmark.LEFT_WRIST)?.position3D?.x?.div(image.height)
+                                    val leftWristY = it.getPoseLandmark(PoseLandmark.LEFT_WRIST)?.position3D?.y?.div(image.width)
+                                    val rightWristX = it.getPoseLandmark(PoseLandmark.RIGHT_WRIST)?.position3D?.x?.div(image.height)
+                                    val rightWristY = it.getPoseLandmark(PoseLandmark.RIGHT_WRIST)?.position3D?.y?.div(image.width)
+                                    val leftHipX = it.getPoseLandmark(PoseLandmark.LEFT_HIP)?.position3D?.x?.div(image.height)
+                                    val leftHipY = it.getPoseLandmark(PoseLandmark.LEFT_HIP)?.position3D?.y?.div(image.width)
+                                    val rightHipX = it.getPoseLandmark(PoseLandmark.RIGHT_HIP)?.position3D?.x?.div(image.height)
+                                    val rightHipY = it.getPoseLandmark(PoseLandmark.RIGHT_HIP)?.position3D?.y?.div(image.width)
+                                    val leftKneeX = it.getPoseLandmark(PoseLandmark.LEFT_KNEE)?.position3D?.x?.div(image.height)
+                                    val leftKneeY = it.getPoseLandmark(PoseLandmark.LEFT_KNEE)?.position3D?.y?.div(image.width)
+                                    val rightKneeX = it.getPoseLandmark(PoseLandmark.RIGHT_KNEE)?.position3D?.x?.div(image.height)
+                                    val rightKneeY = it.getPoseLandmark(PoseLandmark.RIGHT_KNEE)?.position3D?.y?.div(image.width)
+                                    val leftAnkleX = it.getPoseLandmark(PoseLandmark.LEFT_ANKLE)?.position3D?.x?.div(image.height)
+                                    val leftAnkleY = it.getPoseLandmark(PoseLandmark.LEFT_ANKLE)?.position3D?.y?.div(image.width)
+                                    val rightAnkleX = it.getPoseLandmark(PoseLandmark.RIGHT_ANKLE)?.position3D?.x?.div(image.height)
+                                    val rightAnkleY = it.getPoseLandmark(PoseLandmark.RIGHT_ANKLE)?.position3D?.y?.div(image.width)
+
+                                    //On charge le modèle
+                                    val model = Model.newInstance(requireContext())
+                                    // On crée un buffer pour y metter les données utiles
+                                    val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 24), DataType.FLOAT32)
+                                    var byteBuffer : ByteBuffer = ByteBuffer.allocateDirect(4*24)
+                                    inputFeature0.loadBuffer(byteBuffer)
+
+                                    if (leftShoulderX != null) {
+                                        byteBuffer.putFloat(leftShoulderX)
+                                    }
+                                    if (leftShoulderY != null) {
+                                        byteBuffer.putFloat(leftShoulderY)
+                                    }
+                                    if (rightShoulderX != null) {
+                                        byteBuffer.putFloat(rightShoulderX)
+                                    }
+                                    if (rightShoulderY != null) {
+                                        byteBuffer.putFloat(rightShoulderY)
+                                    }
+                                    if (leftElbowX != null) {
+                                        byteBuffer.putFloat(leftElbowX)
+                                    }
+                                    if (leftElbowY != null) {
+                                        byteBuffer.putFloat(leftElbowY)
+                                    }
+                                    if (rightElbowX != null) {
+                                        byteBuffer.putFloat(rightElbowX)
+                                    }
+                                    if (rightElbowY != null) {
+                                        byteBuffer.putFloat(rightElbowY)
+                                    }
+                                    if (leftWristX != null) {
+                                        byteBuffer.putFloat(leftWristX)
+                                    }
+                                    if (leftWristY != null) {
+                                        byteBuffer.putFloat(leftWristY)
+                                    }
+                                    if (rightWristX != null) {
+                                        byteBuffer.putFloat(rightWristX)
+                                    }
+                                    if (rightWristY != null) {
+                                        byteBuffer.putFloat(rightWristY)
+                                    }
+                                    if (leftHipX != null) {
+                                        byteBuffer.putFloat(leftHipX)
+                                    }
+                                    if (leftHipY != null) {
+                                        byteBuffer.putFloat(leftHipY)
+                                    }
+                                    if (rightHipX != null) {
+                                        byteBuffer.putFloat(rightHipX)
+                                    }
+                                    if (rightHipY != null) {
+                                        byteBuffer.putFloat(rightHipY)
+                                    }
+                                    if (leftKneeX != null) {
+                                        byteBuffer.putFloat(leftKneeX)
+                                    }
+                                    if (leftKneeY != null) {
+                                        byteBuffer.putFloat(leftKneeY)
+                                    }
+                                    if (rightKneeX != null) {
+                                        byteBuffer.putFloat(rightKneeX)
+                                    }
+                                    if (rightKneeY != null) {
+                                        byteBuffer.putFloat(rightKneeY)
+                                    }
+                                    if (leftAnkleX != null) {
+                                        byteBuffer.putFloat(leftAnkleX)
+                                    }
+                                    if (leftAnkleY != null) {
+                                        byteBuffer.putFloat(leftAnkleY)
+                                    }
+                                    if (rightAnkleX != null) {
+                                        byteBuffer.putFloat(rightAnkleX)
+                                    }
+                                    if (rightAnkleY != null) {
+                                        byteBuffer.putFloat(rightAnkleY)
+                                    }
+
+                                    inputFeature0.loadBuffer(byteBuffer)
+
+                                    // On lance le modèle avec les données récupérées par MLKit
+                                    val outputs = model.process(inputFeature0)
+                                    val outputFeature0 = outputs.outputFeature0AsTensorBuffer
+                                    model.close()
+
+                                    // outputFeature0.floatArray[0]: Deadlift
+                                    // outputFeature0.floatArray[1]: Squat
+                                    // outputFeature0.floatArray[2]: Bench
+                                    Log.d("quoicoubeh", "Deadlift : "+outputFeature0.floatArray[0].toString())
+                                    Log.d("quoicoubeh", "Squat : "+outputFeature0.floatArray[1].toString())
+                                    Log.d("quoicoubeh", "Bench : "+outputFeature0.floatArray[2].toString())
+
                                 }
 
-                                // Creates inputs for reference.
-                                val inputFeature = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.x.toString() +" "+ it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.y.toString() +" "+ it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.z.toString() +" "+ it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.toString()
 
-                                val test = it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x?.div(
-                                    image.height
-                                ).toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y?.div(
-                                    image.width
-                                ).toString() + "         " + image.height + " " + image.width + "         " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x.toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.y.toString() + " " + it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.z.toString()
-                                Log.d("coucou", test)
-                                //Log.d("coucou", inputFeature)
-                                // Runs model inference and gets result.
-                                // val outputs = model?.process(inputFeature0)
-                                // val outputFeature0 = outputs?.outputFeature0AsTensorBuffer
-
-                                // Releases model resources if no longer used.
-                                // model?.close()
                                 imageProxy.close()
                             }
                             .addOnFailureListener {
@@ -283,36 +310,6 @@ class HomeFragment: Fragment(){
 
         cameraProvider!!.bindToLifecycle(this, cameraSelector!!, imageAnalysis)
     }
-    @ExperimentalGetImage
-    private fun bindCamera() {
-        if (cameraProvider == null) {
-            return
-        }
-        if (videoCapture != null) {
-            cameraProvider!!.unbind(videoCapture)
-        }
-
-        val recorder = Recorder.Builder()
-            .setQualitySelector(QualitySelector.from(Quality.HIGHEST, FallbackStrategy.higherQualityOrLowerThan(Quality.SD)))
-            .build()
-
-        videoCapture = VideoCapture.withOutput(recorder)
-
-        cameraProvider!!.bindToLifecycle(this, cameraSelector!!, videoCapture)
-    }
-
-    private fun unBindPreview(){
-        cameraProvider!!.unbind(preview)
-    }
-
-    private fun unBindCamera(){
-        cameraProvider!!.unbind(videoCapture)
-    }
-
-    private fun unBindAll(){
-        cameraProvider!!.unbindAll()
-    }
-
 
     override fun onDestroy() {
         super.onDestroy()
