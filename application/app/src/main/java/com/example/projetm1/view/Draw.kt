@@ -47,7 +47,6 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
             return
         }
         else {
-            Log.d("Coucou", "width = $width, height= $height, imageWidth = " + imageWidth.toString() +  "imageHeight = " + imageHeight.toString() )
             val viewAspectRatio = width.toFloat() / height
             val imageAspectRatio: Float = imageWidth.toFloat() / imageHeight
             postScaleWidthOffset = 0f
@@ -61,7 +60,6 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
                 scaleFactor = height.toFloat() / imageHeight
                 postScaleWidthOffset = (height.toFloat() * imageAspectRatio - width) / 2
             }
-            Log.d("Coucou","ScaleFactor = $scaleFactor")
         }
 
     }

@@ -294,6 +294,7 @@ class LiveFragment: Fragment(){
                                     // outputFeature0.floatArray[0]: Deadlift
                                     // outputFeature0.floatArray[1]: Squat
                                     // outputFeature0.floatArray[2]: Bench
+                                    Log.d("Coucou", "leftShoulderX : "+ leftShoulderX + "  leftShoulderY : " + leftShoulderY)
                                     Log.d("quoicoubeh", "DeadliftCount : "+movementTab[0])
                                     Log.d("quoicoubeh", "SquatCount : "+movementTab[1])
                                     Log.d("quoicoubeh", "BenchCount : "+movementTab[2])
