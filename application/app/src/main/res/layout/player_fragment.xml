@@ -26,7 +26,9 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:id="@+id/result_layout">
         <ImageView
             android:id="@+id/live_preview_validation_icon"
             android:layout_width="80dp"
@@ -35,18 +37,32 @@
             app:tint="#F00808">
         </ImageView>
         <TextView
-            android:id="@+id/infoTextView"
+            android:id="@+id/exo_name"
             android:layout_width="match_parent"
             android:layout_height="80dp"
             android:text="@string/live_preview_text"
-            android:textSize="15sp"
-            android:textColor="@color/black"
+            android:textSize="30sp"
+            android:textColor="?attr/colorOnPrimary"
             android:textAlignment="center"
+            android:gravity="center"
+            android:fontFamily="@font/mosaiccaps"
             >
 
         </TextView>
     </LinearLayout>
+    <TextView
+        android:id="@+id/infoTextView"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:text="@string/live_preview_text"
+        android:textSize="30sp"
+        android:textColor="?attr/colorOnPrimary"
+        android:textAlignment="center"
+        android:gravity="center"
+        android:layout_marginTop="30dp"
 
+        >
+    </TextView>
 
 
 </RelativeLayout>

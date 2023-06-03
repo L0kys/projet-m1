@@ -185,13 +185,13 @@ class LiveFragment: Fragment(){
                                     val rightAnkleX = it.getPoseLandmark(PoseLandmark.RIGHT_ANKLE)?.position3D?.x?.div(image.height)
                                     val rightAnkleY = it.getPoseLandmark(PoseLandmark.RIGHT_ANKLE)?.position3D?.y?.div(image.width)
 
-                                    //On charge le modèle
+                                    // On charge le modèle
                                     val model = Model.newInstance(requireContext())
                                     // On crée un buffer pour y metter les données utiles
                                     val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 24), DataType.FLOAT32)
                                     var byteBuffer : ByteBuffer = ByteBuffer.allocateDirect(4*24)
                                     byteBuffer.order(ByteOrder.nativeOrder())
-                                    inputFeature0.loadBuffer(byteBuffer)
+
 
                                     if (leftShoulderX != null) {
                                         byteBuffer.putFloat(leftShoulderX)
