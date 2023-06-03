@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">projet m1</string>
+    <string name="app_name">ReferAI</string>
     <string name="rules_button_text">Rules</string>
     <string name="go_to_live_preview_button_text">Live</string>
     <string name="go_to_recording_button_text">Record</string>

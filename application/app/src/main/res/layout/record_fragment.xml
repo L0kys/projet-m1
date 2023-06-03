@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/parentLayout"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="?attr/colorOnPrimary">
 
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
@@ -21,6 +22,8 @@
         android:layout_alignParentEnd="true"
         android:src="@drawable/baseline_videocam_24"
         android:layout_margin="16dp"
-        android:contentDescription="@string/content_video_start_button" />
+        android:contentDescription="@string/content_video_start_button"
+        app:backgroundTint="?attr/colorSecondary"
+        app:tint="?attr/colorPrimary"/>
 
 </RelativeLayout>

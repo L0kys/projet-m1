@@ -67,7 +67,7 @@ class LiveFragment: Fragment(){
         super.onViewCreated(view, savedInstanceState)
         val previewView = binding.viewFinder
 
-        binding.videoCaptureButton.setOnClickListener {
+        binding.resetButton.setOnClickListener {
             resetResult()
         }
 
@@ -84,6 +84,7 @@ class LiveFragment: Fragment(){
 
 
     private fun resetResult() {
+        movementTab = arrayOf(0, 0, 0)
     }
 
     @ExperimentalGetImage
