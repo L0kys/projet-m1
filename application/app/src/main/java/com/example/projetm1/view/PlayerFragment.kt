@@ -74,7 +74,7 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
         val frameExtractor = FrameExtractor(this)
         executorService.execute {
             try {
-                frameExtractor.extractFrames("/storage/emulated/0/DCIM/Camera/[ReferAI] 2.mp4")
+                frameExtractor.extractFrames(StorageFragment.videoList[position].artUri.toString().substring(5))
             } catch (exception: Exception) {
                 exception.printStackTrace()
                 requireActivity().runOnUiThread {

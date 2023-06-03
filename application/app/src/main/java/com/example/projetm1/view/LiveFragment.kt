@@ -80,7 +80,6 @@ class LiveFragment: Fragment(){
         }
 
 
-
     }
 
 

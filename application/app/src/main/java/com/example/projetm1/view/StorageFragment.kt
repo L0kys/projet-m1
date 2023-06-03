@@ -46,7 +46,7 @@ class StorageFragment: Fragment() {
     @SuppressLint("InlinedApi", "Recycle", "Range")
     fun getAllVideos(context: Context): ArrayList<Video> {
         val tempList = ArrayList<Video>()
-        val selection = MediaStore.Video.Media.TITLE + " LIKE '[ReferAI]%'"
+        val selection = MediaStore.Video.Media.TAGS + " LIKE 'ReferAI'"
         val projection = arrayOf(
             MediaStore.Video.Media.TITLE, MediaStore.Video.Media.SIZE, MediaStore.Video.Media._ID,
             MediaStore.Video.Media.BUCKET_DISPLAY_NAME, MediaStore.Video.Media.DATA, MediaStore.Video.Media.DATE_ADDED,

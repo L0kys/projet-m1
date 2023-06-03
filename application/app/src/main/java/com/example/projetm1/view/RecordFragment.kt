@@ -129,10 +129,11 @@ class RecordFragment: Fragment() {
         }
 
         // create and start a new recording session
-        val name = "[ReferAI] " + SimpleDateFormat(FILENAMEFORMAT, Locale.US)
+        val name = SimpleDateFormat(FILENAMEFORMAT, Locale.US)
             .format(System.currentTimeMillis())
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.Video.Media.TAGS, "ReferAI")
             put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
                 put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/ReferAI")
