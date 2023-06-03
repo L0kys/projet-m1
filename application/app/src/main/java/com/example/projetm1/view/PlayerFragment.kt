@@ -1,12 +1,10 @@
 package com.example.projetm1.view
 
-
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.INVISIBLE
@@ -25,7 +23,6 @@ import com.example.projetm1.ml.Model
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.source.LoopingMediaSource
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.PoseDetection
 import com.google.mlkit.vision.pose.PoseLandmark
@@ -41,9 +38,17 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
+/**
+ * PlayerFragment nous permet d'afficher la vidéo selectionnée depuis le StorageFragment et également de réaliser notre post-process dessus.
+ * Pour l'affichage de la vidéo nous utilisons ExoPlayer et pour le post-process nous utilisons un code trouvé sur github qui à été réalisé par "Duc Ky Ngo".
+ *
+ */
+
+
 @AndroidEntryPoint
 class PlayerFragment: Fragment(), IVideoFrameExtractor {
 
+    //Initialise le poseDetector de MLKit
     private val options = PoseDetectorOptions.Builder()
         .setDetectorMode(PoseDetectorOptions.STREAM_MODE)
         .build()
@@ -72,10 +77,13 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
         return binding.root
     }
 
+    // Lorsque le fragment est chargé on affiche la vidéo et on cache les éléments non utiles pour l'instant
     override fun onViewCreated (view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         displayVideo()
         binding.resultLayout.visibility = INVISIBLE
+
+        // Lorsque l'on click sur le boutton on lance le post-process
         binding.buttonTest.setOnClickListener{
             binding.buttonTest.isClickable = false
             binding.infoTextView.visibility = VISIBLE
@@ -86,6 +94,7 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
         }
     }
 
+    // Cette fonction permet de faire appel au FrameExtractor pour récupérer chaque frame de la vidéo
     private fun postProcess() {
         imagePaths.clear()
         titles.clear()
@@ -104,31 +113,38 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
         }
     }
 
+    // Cette fonction permet d'afficher la vidéo à l'aide d'ExoPlayer
     private fun displayVideo(){
-        player = ExoPlayer.Builder(requireContext())
-            .build()
 
+        player = ExoPlayer.Builder(requireContext()).build()
 
+        // On associe l'ExoPlayer au playerView dans le layout
         binding.playerView.player = player
 
-
+        // On récupère un MediaItem à partir de l'Uri de notre vidéo
         val mediaItem = MediaItem.fromUri(StorageFragment.videoList[position].artUri)
-        Log.d("quoicoubeh", StorageFragment.videoList[position].artUri.toString())
+
+        // On met le mode d'affichage en loop
         player.repeatMode = Player.REPEAT_MODE_ONE
+
+        // Lie la vidéo au ExoPlayer et lance la vidéo
         player.setMediaItem(mediaItem)
         player.prepare()
         player.play()
 
     }
 
+    // On utilise cette fonction pour terminer la vidéo lorsque l'on quitte la page
     override fun onDestroyView() {
         super.onDestroyView()
         player.release()
     }
 
+    // Fonction qui est appellé à chaque nouvelle image extraite de la vidéo. On l'utilise pour effectuer notre Pose Detection sur la frame
     override fun onCurrentFrameExtracted(currentFrame: Frame) {
         val startSavingTime = System.currentTimeMillis()
-        // 1. Convert frame byte buffer to bitmap
+
+        // On convertit l'image en bitMap pour pouvoir l'utiliser ensuite
         var imageBitmap = Utils.fromBufferToBitmap(currentFrame.byteBuffer, currentFrame.width, currentFrame.height)
 
         // Vérification de la position de l'image en rotation et vérification d'une possible inversion horizontale ou verticale
@@ -142,14 +158,14 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
         }
 
 
-        // 2. Get the frame file in app external file directory
+        // On récupère le fichier de la frame actuelle
         val allFrameFileFolder = File(requireContext().getExternalFilesDir(null), UUID.randomUUID().toString())
         if (!allFrameFileFolder.isDirectory) {
             allFrameFileFolder.mkdirs()
         }
         val frameFile = File(allFrameFileFolder, "frame_num_${currentFrame.timestamp.toString().padStart(10, '0')}.jpeg")
 
-        // 3. Save current frame to storage
+        // On sauvegarde temporairement l'image
         imageBitmap?.let {
             val savedFile = Utils.saveImageToFile(it, frameFile)
             savedFile?.let {
@@ -158,10 +174,13 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
             }
         }
 
+
+        // Processus de détection de MLKit
         if (imageBitmap != null) {
             val processImage = InputImage.fromBitmap(imageBitmap, 0)
             poseDetector.process(processImage)
                 .addOnSuccessListener {
+                    // On récupère tous les points qui nous intéressent
                     val leftShoulderX = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.x?.div(imageBitmap.width)
                     val leftShoulderY = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.y?.div(imageBitmap.height)
                     val rightShoulderX = it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x?.div(imageBitmap.width)
@@ -187,13 +206,15 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
                     val rightAnkleX = it.getPoseLandmark(PoseLandmark.RIGHT_ANKLE)?.position3D?.x?.div(imageBitmap.width)
                     val rightAnkleY = it.getPoseLandmark(PoseLandmark.RIGHT_ANKLE)?.position3D?.y?.div(imageBitmap.height)
 
-                    // On charge le modèle
+                    // On charge le modèle pour détecter le mouvement
                     val model = Model.newInstance(requireContext())
-                    // On crée un buffer pour y metter les données utiles
+
+                    // On crée un buffer pour y mettre les données utiles
                     val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 24), DataType.FLOAT32)
                     var byteBuffer : ByteBuffer = ByteBuffer.allocateDirect(4*24)
                     byteBuffer.order(ByteOrder.nativeOrder())
 
+                    // On remplit le byteBuffer
                     if (leftShoulderX != null) {
                         byteBuffer.putFloat(leftShoulderX)
                     }
@@ -285,23 +306,22 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
                         movementTab[2] += 1
                     }
                 }
-
-
         }
 
         totalSavingTimeMS += System.currentTimeMillis() - startSavingTime
 
+        // Affiche sur l'écran le nombre de frame extraite
         requireActivity().runOnUiThread {
             binding.infoTextView.text = "Extract ${currentFrame.position} frames"
         }
     }
 
+    // Quand toutes les frames sont extraites on affiche le résultat à l'aide de la fonction chooseMovement() et on modifie l'aspect de l'interface
     @SuppressLint("SetTextI18n")
     override fun onAllFrameExtracted(processedFrameCount: Int, processedTimeMs: Long) {
         binding.infoTextView.text = "Extract $processedFrameCount frames took $processedTimeMs ms| Saving took: $totalSavingTimeMS ms"
 
         binding.infoTextView.visibility = INVISIBLE
-        Log.d("test","testtt")
         chooseMovement()
         movementTab = arrayOf(0,0,0)
         binding.buttonTest.isClickable = true
@@ -309,18 +329,21 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
     }
 
 
+    // Cette fonction nous permet d'effectuer une rotation sur l'image
     private fun RotateBitmap(source: Bitmap, angle: Float): Bitmap? {
         val matrix = Matrix()
         matrix.postRotate(angle)
         return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
+    // Cette fonction nous permet d'effectuer un flip sur l'image
     private fun createFlippedBitmap(source: Bitmap, xFlip: Boolean, yFlip: Boolean): Bitmap? {
         val matrix = Matrix()
         matrix.postScale((if (xFlip) -1 else 1).toFloat(), (if (yFlip) -1 else 1).toFloat(), source.width / 2f, source.height / 2f)
         return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
+    // Cette fonction nous permet de choisir entre les mouvements à la fin du post-process
     private fun chooseMovement(){
         if (movementTab[0] > movementTab[1] && movementTab[0] > movementTab[2]){
             binding.exoName.text = getString(R.string.deadlift_name)

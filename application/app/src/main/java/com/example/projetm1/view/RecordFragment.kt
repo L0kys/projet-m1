@@ -5,19 +5,14 @@ import android.content.ContentValues
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
-import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.FallbackStrategy
 import androidx.camera.video.MediaStoreOutputOptions
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
@@ -30,13 +25,19 @@ import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
 import com.example.projetm1.R
 import com.example.projetm1.databinding.RecordFragmentBinding
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.pose.PoseLandmark
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+
+
+/**
+ * RecordFragment est la page qui nous sert à l'enregistrement de vidéo pour le post-process. Lors du click sur le bouton, l'enregistrement commence
+ * à l'aide de la fonction captureVideo(). Pour arrêter l'enregistrement il suffit de réappuyer sur le bouton une seconde fois. La vidéo est ensuite enregistrée
+ * dans un dossier "ReferAI" dans la galerie du téléphone.
+ */
+
 
 @AndroidEntryPoint
 class RecordFragment: Fragment() {
@@ -64,71 +65,71 @@ class RecordFragment: Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val previewView = binding.viewFinder
 
+        // Bouton pour démarrer l'enregistrement
         binding.videoCaptureButton.setOnClickListener {
             captureVideo()
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        //On démarre la caméra quand l'élément preview est chargé
         previewView.post{
             startCamera()
         }
 
     }
 
+    // StartCamera allume la camera et crée les objets preview et enregistrement pour ensuite les lier à la caméra
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
 
         cameraProviderFuture.addListener({
-            // Used to bind the lifecycle of cameras to the lifecycle owner
+            // Utilisé pour lier les différents cas d'utilisation à la caméra
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-            // Crée la preview pour pouvoir l'utiliser
+            // Crée un objet Preview pour avoir un apercu de la caméra
             val preview = Preview.Builder()
                 .build()
                 .also {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
 
-            // Crée le recording pour pouvoir l'utiliser
+            // Crée un objet Record pour permettre à la caméra d'enregistrer
             val recorder = Recorder.Builder()
                 .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
                 .build()
             videoCapture = VideoCapture.withOutput(recorder)
 
-            // Select back camera as a default
+            // Sélectionne la caméra arrière par défaut
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
-                // Unbind use cases before rebinding
+                // Détache tous les cas d'utilisation avant de les rattacher
                 cameraProvider.unbindAll()
-
-                // Bind use cases to camera
                 cameraProvider.bindToLifecycle(
                     this, cameraSelector, preview, videoCapture)
 
             } catch(exc: Exception) {
-                Log.e("CameraError", "Use case binding failed", exc)
-            }
 
+            }
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    // Implements VideoCapture use case, including start and stop capturing.
+    // Permets de lancer l'enregistrement d'une vidéo
     private fun captureVideo() {
-        val videoCapture = this.videoCapture ?: return
 
+        val videoCapture = this.videoCapture ?: return
+        val curRecording = recording
         binding.videoCaptureButton.isEnabled = false
 
-        val curRecording = recording
+        // Si on enregistre on arrête l'enregistrement (cas du deuxième click sur le bouton)
         if (curRecording != null) {
-            // Stop the current recording session.
             curRecording.stop()
             recording = null
             return
         }
 
-        // create and start a new recording session
+        // On prépare les métadonnées pour le fichier vidéo qui sera enregistré
         val name = SimpleDateFormat(FILENAMEFORMAT, Locale.US)
             .format(System.currentTimeMillis())
         val contentValues = ContentValues().apply {
@@ -142,24 +143,24 @@ class RecordFragment: Fragment() {
 
         val resolver = requireActivity().contentResolver
 
+        // On structure les métadonnées dans un MediaStoreOutputOptions
         val mediaStoreOutputOptions = MediaStoreOutputOptions
             .Builder(resolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             .setContentValues(contentValues)
             .build()
+
         recording = context?.let {
             videoCapture.output
                 .prepareRecording(it, mediaStoreOutputOptions)
                 .apply {
-                    if (PermissionChecker.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.RECORD_AUDIO) ==
-                        PermissionChecker.PERMISSION_GRANTED) {
+                    if (PermissionChecker.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PermissionChecker.PERMISSION_GRANTED) {
                         withAudioEnabled()
                     }
                 }
                 .start(ContextCompat.getMainExecutor(requireContext())) { recordEvent ->
                     when(recordEvent) {
                         is VideoRecordEvent.Start -> {
+                            // Début de l'enregistrement, on change l'aspect du bouton
                             binding.videoCaptureButton.apply {
                                 setImageDrawable(ContextCompat.getDrawable(context, R.drawable.baseline_stop_24))
                                 isEnabled = true
@@ -167,16 +168,13 @@ class RecordFragment: Fragment() {
                         }
 
                         is VideoRecordEvent.Finalize -> {
+                            // Fin de l'enregistrement, on met le bouton par défaut
                             if (!recordEvent.hasError()) {
-                                val msg = "Video capture succeeded: " +
-                                        "${recordEvent.outputResults.outputUri}"
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT)
-                                    .show()
+                                val msg = "Video enregistrée"
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                             } else {
                                 recording?.close()
                                 recording = null
-                                Log.e("capture video", "Video capture ends with error: " +
-                                        "${recordEvent.error}")
                             }
 
                             binding.videoCaptureButton.apply {

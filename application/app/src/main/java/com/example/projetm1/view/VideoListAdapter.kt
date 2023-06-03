@@ -27,11 +27,15 @@ class VideoListAdapter(private val context: Context, private var videoList: Arra
     override fun onBindViewHolder(holder: StorageViewHolder, position: Int) {
         holder.title.text = videoList[position].title
         holder.duration.text = DateUtils.formatElapsedTime(videoList[position].duration/1000)
+
+        // Glide permet de récupérer une miniature pour chaque vidéo
         Glide.with(context)
             .asBitmap()
             .load(videoList[position].artUri)
             .apply(RequestOptions().placeholder(R.drawable.baseline_play_circle_24).centerCrop())
             .into(holder.image)
+
+        // Ce listener permet de savoir quelle vidéo a été selectionné. On envoie la position de la vidéo et on affiche le fragment de lecteur vidéo
         holder.root.setOnClickListener {
             PlayerFragment.position = position
             Navigation.findNavController(holder.itemView).navigate(R.id.action_storageFragment_to_playerFragment)
