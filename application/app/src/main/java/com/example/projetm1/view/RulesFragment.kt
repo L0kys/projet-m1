@@ -11,10 +11,16 @@ import com.example.projetm1.databinding.FragmentRulesBinding
 
 private lateinit var binding: FragmentRulesBinding
 
+
+/**
+ * Ce fragment permet un simple affichage des règles d'utilisation que l'utilisateur doit prendre en compte
+ * pour avoir une expérience optimale avec l'application. Il contient aussi toutes les règles associées au sport
+ * que l'application doit pouvoir détecter.
+ * **/
 class RulesFragment : Fragment() {
 
 
-
+    // Création du Fragment avec le layout qui contient toute sa fonction
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
