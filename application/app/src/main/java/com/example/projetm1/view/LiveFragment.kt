@@ -72,14 +72,14 @@ class LiveFragment: Fragment(){
         }
 
 
-
-
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         previewView.post {
 
             startCamera()
         }
+
+
 
     }
 
@@ -301,6 +301,7 @@ class LiveFragment: Fragment(){
                                     Log.d("quoicoubeh", "Deadlift : "+outputFeature0.floatArray[0].toString())
                                     Log.d("quoicoubeh", "Squat : "+outputFeature0.floatArray[1].toString())
                                     Log.d("quoicoubeh", "Bench : "+outputFeature0.floatArray[2].toString())
+                                    Log.d("quoicoubeh", "Undefined : "+outputFeature0.floatArray[3].toString())
 
                                 }
 
