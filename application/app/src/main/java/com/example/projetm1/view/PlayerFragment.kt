@@ -55,7 +55,6 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
     private var imagePaths = ArrayList<Uri>()
     private var titles: ArrayList<String> = ArrayList()
     var totalSavingTimeMS: Long = 0
-    val COMMAND_SET_REPEAT_MODE: Int = 15
 
     companion object{
         private lateinit var player: ExoPlayer
@@ -120,6 +119,11 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
         player.prepare()
         player.play()
 
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        player.release()
     }
 
     override fun onCurrentFrameExtracted(currentFrame: Frame) {

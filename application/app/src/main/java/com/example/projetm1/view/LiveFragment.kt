@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import com.example.projetm1.R
 import com.example.projetm1.databinding.LiveFragmentBinding
 import com.example.projetm1.ml.Model
+import com.example.projetm1.ml.ModelLstm
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.PoseDetection
 import com.google.mlkit.vision.pose.PoseLandmark
@@ -51,7 +52,7 @@ class LiveFragment: Fragment(){
     // Select back camera as a default
     private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-
+    var byteBufferLstm : ByteBuffer = ByteBuffer.allocateDirect(4*24*440)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -187,6 +188,7 @@ class LiveFragment: Fragment(){
 
                                     // On charge le modèle
                                     val model = Model.newInstance(requireContext())
+
                                     // On crée un buffer pour y metter les données utiles
                                     val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 24), DataType.FLOAT32)
                                     var byteBuffer : ByteBuffer = ByteBuffer.allocateDirect(4*24)
@@ -303,6 +305,110 @@ class LiveFragment: Fragment(){
                                     Log.d("quoicoubeh", "Bench : "+outputFeature0.floatArray[2].toString())
                                     Log.d("quoicoubeh", "Undefined : "+outputFeature0.floatArray[3].toString())
 
+/*
+                                    // On charge le modèle
+                                    val modelLstm = ModelLstm.newInstance(requireContext())
+                                    val inputFeatureLstm = TensorBuffer.createFixedSize(intArrayOf(1, 440, 24), DataType.FLOAT32)
+                                    var byteBufferTemp : ByteBuffer = ByteBuffer.allocateDirect(4*24*439)
+                                    byteBufferTemp.order(ByteOrder.nativeOrder())
+
+
+                                    byteBufferLstm.position(96)
+                                    byteBufferTemp = byteBufferLstm.slice()
+
+                                    byteBufferLstm.position(0)
+                                    byteBufferLstm.put(byteBufferTemp)
+
+
+                                    if (leftShoulderX != null) {
+                                        byteBufferLstm.putFloat(leftShoulderX)
+                                    }
+                                    if (leftShoulderY != null) {
+                                        byteBufferLstm.putFloat(leftShoulderY)
+                                    }
+                                    if (rightShoulderX != null) {
+                                        byteBufferLstm.putFloat(rightShoulderX)
+                                    }
+                                    if (rightShoulderY != null) {
+                                        byteBufferLstm.putFloat(rightShoulderY)
+                                    }
+                                    if (leftElbowX != null) {
+                                        byteBufferLstm.putFloat(leftElbowX)
+                                    }
+                                    if (leftElbowY != null) {
+                                        byteBufferLstm.putFloat(leftElbowY)
+                                    }
+                                    if (rightElbowX != null) {
+                                        byteBufferLstm.putFloat(rightElbowX)
+                                    }
+                                    if (rightElbowY != null) {
+                                        byteBufferLstm.putFloat(rightElbowY)
+                                    }
+                                    if (leftWristX != null) {
+                                        byteBufferLstm.putFloat(leftWristX)
+                                    }
+                                    if (leftWristY != null) {
+                                        byteBufferLstm.putFloat(leftWristY)
+                                    }
+                                    if (rightWristX != null) {
+                                        byteBufferLstm.putFloat(rightWristX)
+                                    }
+                                    if (rightWristY != null) {
+                                        byteBufferLstm.putFloat(rightWristY)
+                                    }
+                                    if (leftHipX != null) {
+                                        byteBufferLstm.putFloat(leftHipX)
+                                    }
+                                    if (leftHipY != null) {
+                                        byteBufferLstm.putFloat(leftHipY)
+                                    }
+                                    if (rightHipX != null) {
+                                        byteBufferLstm.putFloat(rightHipX)
+                                    }
+                                    if (rightHipY != null) {
+                                        byteBufferLstm.putFloat(rightHipY)
+                                    }
+                                    if (leftKneeX != null) {
+                                        byteBufferLstm.putFloat(leftKneeX)
+                                    }
+                                    if (leftKneeY != null) {
+                                        byteBufferLstm.putFloat(leftKneeY)
+                                    }
+                                    if (rightKneeX != null) {
+                                        byteBufferLstm.putFloat(rightKneeX)
+                                    }
+                                    if (rightKneeY != null) {
+                                        byteBufferLstm.putFloat(rightKneeY)
+                                    }
+                                    if (leftAnkleX != null) {
+                                        byteBufferLstm.putFloat(leftAnkleX)
+                                    }
+                                    if (leftAnkleY != null) {
+                                        byteBufferLstm.putFloat(leftAnkleY)
+                                    }
+                                    if (rightAnkleX != null) {
+                                        byteBufferLstm.putFloat(rightAnkleX)
+                                    }
+                                    if (rightAnkleY != null) {
+                                        byteBufferLstm.putFloat(rightAnkleY)
+                                    }
+
+                                    inputFeatureLstm.loadBuffer(byteBufferLstm)
+
+                                    val outputs1 = modelLstm.process(inputFeatureLstm)
+                                    val outputFeature1 = outputs1.outputFeature0AsTensorBuffer
+
+                                    Log.d("quoicoubeh", "False Deadlift : "+outputFeature1.floatArray[0].toString())
+                                    Log.d("quoicoubeh", "False Squat : "+outputFeature1.floatArray[1].toString())
+                                    Log.d("quoicoubeh", "False Bench : "+outputFeature1.floatArray[2].toString())
+                                    Log.d("quoicoubeh", "True Deadlift : "+outputFeature1.floatArray[0].toString())
+                                    Log.d("quoicoubeh", "True Squat : "+outputFeature1.floatArray[1].toString())
+                                    Log.d("quoicoubeh", "True Bench : "+outputFeature1.floatArray[2].toString())
+
+
+                                    modelLstm.close()
+
+ */
                                 }
 
 
