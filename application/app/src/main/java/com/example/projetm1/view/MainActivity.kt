@@ -11,8 +11,15 @@ import androidx.core.content.ContextCompat
 import com.example.projetm1.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
 
+/**
+ * La MainActivity de cette applicatoin n'a que deux objectifs principaux :
+ *      Demander les permissions à l'utilisateur
+ *      être l'hôte des différents fragments qui constituent l'application
+ * **/
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    // Tout le code de cette page excpté le binding ne sert qu'à demander les permissions à l'utilisateur et à été repris depuis le tutoriel pour l'utilisation de CameraX de developer.android.com
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

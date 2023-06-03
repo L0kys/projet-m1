@@ -8,6 +8,11 @@ import android.view.View
 import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseLandmark
 
+
+/**
+ * Cette classe a pour but de dessiner sur une vue le squelette de la personne qui est detectée par le pose detector de MLKIT
+ * **/
+
 class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHeight : Int) : View(context) {
     lateinit var boundaryPaint: Paint
     lateinit var leftPaint: Paint
@@ -21,6 +26,7 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
 
 
 
+    // Fonction qui permet d'ajuster la taille de l'affichage dès qu'elle change
      override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
          viewHeight = h
@@ -28,6 +34,7 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
          init()
     }
 
+    // Fonction qui se relance dès que la taille d'affichage change et qui permet de recalculer les paramètres de scaling en fonction de la nouvelle taille
     private fun init() {
         boundaryPaint = Paint()
         boundaryPaint.color = Color.WHITE
@@ -41,10 +48,12 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
         rightPaint.strokeWidth = 10f
         rightPaint.color = Color.YELLOW
 
+
         if( imageHeight < 0 || imageWidth < 0){
             return
         }
         else {
+            // calcul du scaleFactor important pour que les points s'affichent bien aux positions correspondantessur la preview
             val viewAspectRatio = width.toFloat() / height
             val imageAspectRatio: Float = imageWidth.toFloat() / imageHeight
             postScaleWidthOffset = 0f
@@ -66,12 +75,14 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
         super.onDraw(canvas)
         val landmarks = pose.allPoseLandmarks
 
+        // On trace les points
         for (landmark in landmarks) {
 
             canvas?.drawCircle(translateX(landmark.position.x),translateY(landmark.position.y),8.0f,boundaryPaint)
 
         }
 
+        // On cherche les coordonnées des points qui nous intéressent
         val leftShoulder = pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)
         val rightShoulder = pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)
         val leftElbow = pose.getPoseLandmark(PoseLandmark.LEFT_ELBOW)
@@ -84,7 +95,6 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
         val rightKnee = pose.getPoseLandmark(PoseLandmark.RIGHT_KNEE)
         val leftAnkle = pose.getPoseLandmark(PoseLandmark.LEFT_ANKLE)
         val rightAnkle = pose.getPoseLandmark(PoseLandmark.RIGHT_ANKLE)
-
         val leftPinky = pose.getPoseLandmark(PoseLandmark.LEFT_PINKY)
         val rightPinky = pose.getPoseLandmark(PoseLandmark.RIGHT_PINKY)
         val leftIndex = pose.getPoseLandmark(PoseLandmark.LEFT_INDEX)
@@ -97,6 +107,8 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
         val rightFootIndex = pose.getPoseLandmark(PoseLandmark.RIGHT_FOOT_INDEX)
 
 
+
+        // On trace les lignes entre les points qui doivent être reliés
         if ( leftShoulder != null && rightShoulder != null && leftElbow != null && rightElbow != null && leftWrist != null && rightWrist != null && leftHip != null && rightHip != null &&
             leftKnee != null && rightKnee != null && leftAnkle != null && rightAnkle != null && leftPinky != null && rightPinky != null && leftIndex != null && rightIndex != null &&
                 leftThumb != null && rightThumb != null && leftHeel != null && rightHeel != null && leftFootIndex != null && rightFootIndex != null) {
@@ -276,6 +288,8 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
         }
     }
 
+
+    // Ces trois fonctions permettent simplement de passer de la taille de l'image prise dans l'analyseur à la taille de l'affichage
     private fun scale(imagePixel: Float): Float {
         return imagePixel * scaleFactor
     }

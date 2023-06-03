@@ -29,30 +29,43 @@ import java.nio.ByteOrder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-
+/**
+ * Ce fragment est l'un des deux fragments principaux où les modèles de décision sont importés.
+ * Il permet d'avoir une vue en direct de la caméra avec un affichage instantané de la position qui est détectée
+ * il fait aussi appel à la classe Draw pour pouvoir afficher la position du corps détectée en
+ * surimpression de la preview.
+ *
+ * Dans ce fragment on a aussi importé le/les modèles TfLite qui permettent de détecter quel exercice est
+ * pratiqué pour le NN ou si le mouvement est valide pour le LSTM
+ * **/
 @AndroidEntryPoint
 class LiveFragment: Fragment(){
 
     private lateinit var binding: LiveFragmentBinding
 
+    //création des variables qui contiendront les UseCases pour bind la caméra
     private var cameraProvider: ProcessCameraProvider? = null
     private var preview: Preview? = null
     private var imageAnalysis: ImageAnalysis? = null
+
+    //Tableau permettant le comptage de la détection du mouvement grâce au NN
     private var movementTab = arrayOf(0,0,0)
+
 
     private lateinit var cameraExecutor: ExecutorService
 
-    // Base pose detector with streaming frames, when depending on the pose-detection sdk
+    // Création du PoseDetector de MLKIT qui permet l'inférence du squelette
     private val options = PoseDetectorOptions.Builder()
+            // On utilise STREAM_MODE, adapté à la détection en temps réel, car on souhaite un maximum de vitesse d'inférence
         .setDetectorMode(PoseDetectorOptions.STREAM_MODE)
         .build()
-
     private val poseDetector = PoseDetection.getClient(options)
 
-    // Select back camera as a default
+    // On sélectionne la caméra arrière du téléphone par défaut
     private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-    var byteBufferLstm : ByteBuffer = ByteBuffer.allocateDirect(4*24*440)
+    // Création du buffer pour contenir l'entrée du LSTM
+    //var byteBufferLstm : ByteBuffer = ByteBuffer.allocateDirect(4*24*440)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,6 +76,8 @@ class LiveFragment: Fragment(){
         binding = LiveFragmentBinding.inflate(inflater)
         return binding.root
     }
+
+    // Après création du Fragment on créé le caméra exécutor et on assigne sa tâche au boutton de reset
     @ExperimentalGetImage
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -84,10 +99,8 @@ class LiveFragment: Fragment(){
     }
 
 
-    private fun resetResult() {
-        movementTab = arrayOf(0, 0, 0)
-    }
 
+    //Fonction qui va permettre de démarrer la preview de la caméra ainsi que l'analyse d'image en direct
     @ExperimentalGetImage
     private fun startCamera() {
 
@@ -98,6 +111,7 @@ class LiveFragment: Fragment(){
             cameraProvider = cameraProviderFuture.get()
 
             try {
+                // On s'assure qu'il n'y a plus d'UseCases sur caméraProvider et on bind les deux dont on a besoin (preview + imageAnalysis)
                 cameraProvider!!.unbindAll()
                 bindPreview()
                 bindImageAnalysis()
@@ -109,6 +123,7 @@ class LiveFragment: Fragment(){
         }, context?.let { ContextCompat.getMainExecutor(it) })
     }
 
+    // Fonction permettant un simple affichage de ce que filme la caméra du téléphone
     private fun bindPreview() {
         if (cameraProvider == null) {
             return
@@ -120,10 +135,12 @@ class LiveFragment: Fragment(){
         val builder = Preview.Builder()
 
         preview = builder.build()
+        // On affecte viewFinder comme surface d'affichage
         preview!!.setSurfaceProvider(binding.viewFinder!!.surfaceProvider)
         cameraProvider!!.bindToLifecycle(this, cameraSelector!!, preview)
     }
 
+    // Cette fonction va simultanément créer le UseCase imageAnalysis et tout le traitement que nous effectuons sur chaque frame captée
     @ExperimentalGetImage
     private fun bindImageAnalysis() {
         if (cameraProvider == null) {
@@ -134,20 +151,27 @@ class LiveFragment: Fragment(){
         }
 
         val imageAnalysis = ImageAnalysis.Builder()
+                // Ici on choissit une stratégie de contre pression qui prend des frames dès que possible et abandonne celles qui ne peuvent pas être traitées
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                // On s'assure que la résolution corresponde à la taille allouée sur l'écran du téléphone
             .setTargetResolution(Size(binding.viewFinder.width, binding.viewFinder.height))
             .build()
 
 
+        // Ici on a créer tout le processus qui va être appliqué à chaque frame traitée
         context?.let { ContextCompat.getMainExecutor(it) }?.let {
             imageAnalysis.setAnalyzer(it, ImageAnalysis.Analyzer { imageProxy ->
+                //création de l'image dans le bon format grâce à caméraX
                     val rotationDegrees = imageProxy.imageInfo.rotationDegrees
                     val image = imageProxy.image
 
                     if (image != null) {
                         val processImage = InputImage.fromMediaImage(image, rotationDegrees)
+                        // On donne l'image crée au pose detector de MLKIT qui sous réserve de succès nous renvoit un objet Pose contenant toutes les coordonnées que nous cherchons
                         poseDetector.process(processImage)
                             .addOnSuccessListener { it ->
+
+                                //On affiche la vue supplémentaire crée à travers la classe Draw
                                 if(binding.parentLayout.childCount>3){
                                     binding.parentLayout.removeViewAt(3)
                                 }
@@ -160,7 +184,8 @@ class LiveFragment: Fragment(){
                                     val element = Draw(context,it,image.height,image.width)
                                     binding.parentLayout.addView(element)
 
-                                    // On récupère tous les points utiles pour notre modèle
+
+                                    // On récupère toutes les coordonnées des points utiles pour notre modèle
                                     val leftShoulderX = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.x?.div(image.height)
                                     val leftShoulderY = it.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)?.position3D?.y?.div(image.width)
                                     val rightShoulderX = it.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)?.position3D?.x?.div(image.height)
@@ -189,12 +214,12 @@ class LiveFragment: Fragment(){
                                     // On charge le modèle
                                     val model = Model.newInstance(requireContext())
 
-                                    // On crée un buffer pour y metter les données utiles
+                                    // On crée un buffer pour y metter les données utiles dans le bon ordre
                                     val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 24), DataType.FLOAT32)
                                     var byteBuffer : ByteBuffer = ByteBuffer.allocateDirect(4*24)
                                     byteBuffer.order(ByteOrder.nativeOrder())
 
-
+                                    // On ajoute les-dit points au Buffer
                                     if (leftShoulderX != null) {
                                         byteBuffer.putFloat(leftShoulderX)
                                     }
@@ -275,7 +300,7 @@ class LiveFragment: Fragment(){
                                     val outputFeature0 = outputs.outputFeature0AsTensorBuffer
                                     model.close()
 
-
+                                    // On incrémente la table des exercices
                                     if (outputFeature0.floatArray[0] > 0.97f ){
                                         movementTab[0] += 1
                                     }
@@ -286,6 +311,7 @@ class LiveFragment: Fragment(){
                                         movementTab[2] += 1
                                     }
 
+                                    // On change le texte à l'écran en fonction de la classe dominante dans la session actuelle
                                     if (movementTab[0] > movementTab[1] && movementTab[0] > movementTab[2]){
                                         binding.livePreviewExerciceNameTextView.text = getString(R.string.deadlift_name)
                                     } else if (movementTab[1] > movementTab[0] && movementTab[1] > movementTab[2]){
@@ -293,20 +319,10 @@ class LiveFragment: Fragment(){
                                     }else{
                                         binding.livePreviewExerciceNameTextView.text = getString(R.string.bench_name)
                                     }
-                                    // outputFeature0.floatArray[0]: Deadlift
-                                    // outputFeature0.floatArray[1]: Squat
-                                    // outputFeature0.floatArray[2]: Bench
-                                    Log.d("Coucou", "leftShoulderX : "+ leftShoulderX + "  leftShoulderY : " + leftShoulderY)
-                                    Log.d("quoicoubeh", "DeadliftCount : "+movementTab[0])
-                                    Log.d("quoicoubeh", "SquatCount : "+movementTab[1])
-                                    Log.d("quoicoubeh", "BenchCount : "+movementTab[2])
-                                    Log.d("quoicoubeh", "Deadlift : "+outputFeature0.floatArray[0].toString())
-                                    Log.d("quoicoubeh", "Squat : "+outputFeature0.floatArray[1].toString())
-                                    Log.d("quoicoubeh", "Bench : "+outputFeature0.floatArray[2].toString())
-                                    Log.d("quoicoubeh", "Undefined : "+outputFeature0.floatArray[3].toString())
+
 
 /*
-                                    // On charge le modèle
+                                    // On charge le modèleLSTM et on l'exploite
                                     val modelLstm = ModelLstm.newInstance(requireContext())
                                     val inputFeatureLstm = TensorBuffer.createFixedSize(intArrayOf(1, 440, 24), DataType.FLOAT32)
                                     var byteBufferTemp : ByteBuffer = ByteBuffer.allocateDirect(4*24*439)
@@ -398,20 +414,18 @@ class LiveFragment: Fragment(){
                                     val outputs1 = modelLstm.process(inputFeatureLstm)
                                     val outputFeature1 = outputs1.outputFeature0AsTensorBuffer
 
-                                    Log.d("quoicoubeh", "False Deadlift : "+outputFeature1.floatArray[0].toString())
-                                    Log.d("quoicoubeh", "False Squat : "+outputFeature1.floatArray[1].toString())
-                                    Log.d("quoicoubeh", "False Bench : "+outputFeature1.floatArray[2].toString())
-                                    Log.d("quoicoubeh", "True Deadlift : "+outputFeature1.floatArray[0].toString())
-                                    Log.d("quoicoubeh", "True Squat : "+outputFeature1.floatArray[1].toString())
-                                    Log.d("quoicoubeh", "True Bench : "+outputFeature1.floatArray[2].toString())
-
+                                    Log.d("test", "False Deadlift : "+outputFeature1.floatArray[0].toString())
+                                    Log.d("test", "False Squat : "+outputFeature1.floatArray[1].toString())
+                                    Log.d("test", "False Bench : "+outputFeature1.floatArray[2].toString())
+                                    Log.d("test", "True Deadlift : "+outputFeature1.floatArray[0].toString())
+                                    Log.d("test", "True Squat : "+outputFeature1.floatArray[1].toString())
+                                    Log.d("test", "True Bench : "+outputFeature1.floatArray[2].toString())
 
                                     modelLstm.close()
-
  */
                                 }
 
-
+                                // Fermeture de l'image proxy importante pour que l'analyseur puisse avoir l'information qu'il peut chercher une nouvelle frame
                                 imageProxy.close()
                             }
                             .addOnFailureListener {
@@ -422,12 +436,18 @@ class LiveFragment: Fragment(){
             })
         }
 
+        // On bind le UseCase imageAnalysis au cycle de vie du caméraProvider
         cameraProvider!!.bindToLifecycle(this, cameraSelector!!, imageAnalysis)
     }
 
+    // On ferme cameraExecutor quand la page est détruite
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
 
+    //Fonction qui remet le tableau à zéro si on souhaite voir une nouvelle détection de quel exercice est pratiqué
+    private fun resetResult() {
+        movementTab = arrayOf(0, 0, 0)
+    }
 }
