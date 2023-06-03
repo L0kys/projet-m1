@@ -44,18 +44,10 @@ class RecordFragment: Fragment() {
     private lateinit var binding: RecordFragmentBinding
 
     private val FILENAMEFORMAT = "yyyy-MM-dd-HH-mm-ss"
-    private var imageCapture: ImageCapture? = null
-    private var cameraProvider: ProcessCameraProvider? = null
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
-    private var preview: Preview? = null
-    private var imageAnalysis: ImageAnalysis? = null
-    val modelName = "model.tflite"
-    private var ratio: Float = 1.625f
 
     private lateinit var cameraExecutor: ExecutorService
-    private val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
 
     override fun onCreateView(
         inflater: LayoutInflater,

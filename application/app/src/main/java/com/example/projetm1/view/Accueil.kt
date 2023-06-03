@@ -6,10 +6,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.marginRight
-import androidx.core.view.setPadding
 import androidx.navigation.findNavController
-import com.example.projetm1.R
 import com.example.projetm1.databinding.FragmentAccueilBinding
 import dagger.hilt.android.AndroidEntryPoint
 

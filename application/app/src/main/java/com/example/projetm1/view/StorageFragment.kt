@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
@@ -17,7 +16,6 @@ import com.example.projetm1.databinding.StorageFragmentBinding
 import java.io.File
 
 
-//Test n°2
 class StorageFragment: Fragment() {
 
     private lateinit var binding: StorageFragmentBinding
