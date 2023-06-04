@@ -345,12 +345,16 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
 
     // Cette fonction nous permet de choisir entre les mouvements à la fin du post-process
     private fun chooseMovement(){
-        if (movementTab[0] > movementTab[1] && movementTab[0] > movementTab[2]){
-            binding.exoName.text = getString(R.string.deadlift_name)
-        } else if (movementTab[1] > movementTab[0] && movementTab[1] > movementTab[2]){
-            binding.exoName.text = getString(R.string.squat_name)
-        }else{
-            binding.exoName.text = getString(R.string.bench_name)
+        if(movementTab[0] > 5 || movementTab[1] > 5 || movementTab[2] > 5){
+            if (movementTab[0] > movementTab[1] && movementTab[0] > movementTab[2]){
+                binding.exoName.text = getString(R.string.deadlift_name)
+            } else if (movementTab[1] > movementTab[0] && movementTab[1] > movementTab[2]){
+                binding.exoName.text = getString(R.string.squat_name)
+            }else{
+                binding.exoName.text = getString(R.string.bench_name)
+            }
+        } else {
+            binding.exoName.text = getString(R.string.no_mouvement)
         }
     }
 }

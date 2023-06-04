@@ -43,4 +43,5 @@ Les règles que nous avons pu ajouter sont les suivantes :\n\n
     <string name="squat_name">Squat</string>
     <string name="bench_name">Bench</string>
     <string name="deadlift_name">Deadlift</string>
+    <string name="no_mouvement">Aucune detection</string>
 </resources>
