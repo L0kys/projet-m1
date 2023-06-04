@@ -32,7 +32,8 @@
     <fragment
         android:id="@+id/storageFragment"
         android:name="com.example.projetm1.view.StorageFragment"
-        android:label="StorageFragment" >
+        android:label="StorageFragment"
+        tools:layout="@layout/storage_fragment">
         <action
             android:id="@+id/action_storageFragment_to_playerFragment"
             app:destination="@id/playerFragment" />
@@ -40,7 +41,8 @@
     <fragment
         android:id="@+id/playerFragment"
         android:name="com.example.projetm1.view.PlayerFragment"
-        android:label="PlayerFragment" />
+        android:label="PlayerFragment"
+        tools:layout="@layout/player_fragment"/>
     <fragment
         android:id="@+id/rulesFragment"
         android:name="com.example.projetm1.view.RulesFragment"
@@ -49,6 +51,7 @@
     <fragment
         android:id="@+id/recordFragment"
         android:name="com.example.projetm1.view.RecordFragment"
-        android:label="RecordFragment" />
+        android:label="RecordFragment"
+        tools:layout="@layout/record_fragment"/>
 
 </navigation>

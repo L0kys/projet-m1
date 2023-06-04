@@ -167,7 +167,7 @@ class LiveFragment: Fragment(){
 
                     if (image != null) {
                         val processImage = InputImage.fromMediaImage(image, rotationDegrees)
-                        // On donne l'image crée au pose detector de MLKIT qui sous réserve de succès nous renvoit un objet Pose contenant toutes les coordonnées que nous cherchons
+                        // On donne l'image créée au pose detector de MLKIT qui sous réserve de succès nous renvoit un objet Pose contenant toutes les coordonnées que nous cherchons
                         poseDetector.process(processImage)
                             .addOnSuccessListener { it ->
 
@@ -321,9 +321,9 @@ class LiveFragment: Fragment(){
                                     }
 
 
-/*
+
                                     // On charge le modèleLSTM et on l'exploite
-                                    val modelLstm = ModelLstm.newInstance(requireContext())
+ /*                                   val modelLstm = ModelLstm.newInstance(requireContext())
                                     val inputFeatureLstm = TensorBuffer.createFixedSize(intArrayOf(1, 440, 24), DataType.FLOAT32)
                                     var byteBufferTemp : ByteBuffer = ByteBuffer.allocateDirect(4*24*439)
                                     byteBufferTemp.order(ByteOrder.nativeOrder())
@@ -422,7 +422,7 @@ class LiveFragment: Fragment(){
                                     Log.d("test", "True Bench : "+outputFeature1.floatArray[2].toString())
 
                                     modelLstm.close()
- */
+*/
                                 }
 
                                 // Fermeture de l'image proxy importante pour que l'analyseur puisse avoir l'information qu'il peut chercher une nouvelle frame

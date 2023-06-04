@@ -53,17 +53,17 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
             return
         }
         else {
-            // calcul du scaleFactor important pour que les points s'affichent bien aux positions correspondantessur la preview
+            // Calcul du scaleFactor important pour que les points s'affichent bien aux positions correspondantes sur la preview
             val viewAspectRatio = width.toFloat() / height
             val imageAspectRatio: Float = imageWidth.toFloat() / imageHeight
             postScaleWidthOffset = 0f
             postScaleHeightOffset = 0f
+            // On regarde dans quel sens on doit raccourcir l'image
             if (viewAspectRatio > imageAspectRatio) {
-                // The image needs to be vertically cropped to be displayed in this view.
                 scaleFactor = width.toFloat() / imageWidth
                 postScaleHeightOffset = (width.toFloat() / imageAspectRatio - height) / 2
             } else {
-                // The image needs to be horizontally cropped to be displayed in this view.
+
                 scaleFactor = height.toFloat() / imageHeight
                 postScaleWidthOffset = (height.toFloat() * imageAspectRatio - width) / 2
             }
@@ -289,7 +289,8 @@ class Draw(context: Context?, var pose: Pose, var imageWidth : Int, var imageHei
     }
 
 
-    // Ces trois fonctions permettent simplement de passer de la taille de l'image prise dans l'analyseur à la taille de l'affichage
+    // Ces trois fonctions permettent simplement de passer de la taille
+    // de l'image prise dans l'analyseur à la taille de l'affichage
     private fun scale(imagePixel: Float): Float {
         return imagePixel * scaleFactor
     }
