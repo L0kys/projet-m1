@@ -106,9 +106,6 @@ class PlayerFragment: Fragment(), IVideoFrameExtractor {
                 frameExtractor.extractFrames(StorageFragment.videoList[position].artUri.toString().substring(5))
             } catch (exception: Exception) {
                 exception.printStackTrace()
-                requireActivity().runOnUiThread {
-                    Toast.makeText(requireContext(), "Failed to extract frames", Toast.LENGTH_SHORT).show()
-                }
             }
         }
     }

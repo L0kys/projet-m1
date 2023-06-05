@@ -13,10 +13,11 @@
     <string name="live_preview_text"> </string>
     <string name="rules_title_part_1_usage">Utilisation</string>
 
-    <string name="usage_rules_text">- Lorsque la personne se filme pour être arbitré, elle doit se filmer de face ou de 3/4 de façon à ce que tout sont corps soit visible.\n\n
+    <string name="usage_rules_text">Lorsque la personne se filme pour être arbitré, elle doit se filmer de face ou de 3/4 de façon à ce que tout sont corps soit visible.\n\n
+- L’enregistrement du mouvement débutera automatiquement dès que la position de départ sera détectée.\n\n
 - Il existe deux modes d’arbitrage : \n\n
-    \t\t- Le premier en temps réel, qui indique de quel mouvement il s’agit et s’il est correct ou non. Ce mode ne permet pas d’enregistrer la vidéo simultanément \n\n
-    \t\t- Le second permet d’enregistrer le mouvement, mais il n’est pas en temps réel, il faut passer par la galerie pour pouvoir lancer l'analyse de la vidéo.</string>
+    \t\t- Le premier en temps réel qui, une fois le mouvement terminé, et l’enregistrement stoppé, indique de quel mouvement il s’agit et s’il est correcte ou non. Ce mode ne permet pas d’enregistrer les mouvements simultanément \n\n
+    \t\t- Le second permet d’enregistrer le mouvement, mais il n’est pas en temps réel donc nécessite un temps d’attente après la fin de la vidéo afin de savoir si le mouvement est correcte ou non.</string>
 
     <string name="rules_title_part_2_fouls">Fautes</string>
 

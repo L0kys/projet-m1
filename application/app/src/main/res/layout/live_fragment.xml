@@ -45,6 +45,7 @@
             android:textColor="?attr/colorOnPrimary"
             android:fontFamily="@font/mosaiccaps"
             android:textAlignment="center"
+            android:gravity="center"
             >
 
         </TextView>
